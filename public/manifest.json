@@ -1,0 +1,17 @@
+{
+  "name": "Pastel Finance",
+  "short_name": "Pastel",
+  "description": "บันทึกรายรับ-รายจ่าย สไตล์พาสเทล",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#AEC6CF",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2454/2454282.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
