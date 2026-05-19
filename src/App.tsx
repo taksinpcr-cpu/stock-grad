@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo, FormEvent, ChangeEvent } from 'react';
+import { supabase } from './lib/supabase';
 import { 
   Plus, 
   Minus, 
@@ -78,7 +79,7 @@ export default function App() {
     const saved = localStorage.getItem('users');
     if (saved) return JSON.parse(saved);
     return [
-      { id: '1', username: 'jin', password: 'jin', role: 'admin', name: 'Admin Jin' }
+      { id: 'admin', username: 'admin', password: 'password', role: 'admin', name: 'System Admin' }
     ];
   });
 
@@ -99,13 +100,37 @@ export default function App() {
     return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
   });
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'users' | 'import'>('dashboard');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filterType, setFilterType] = useState<'all' | TransactionType>('all');
-  const [dateFilter, setDateFilter] = useState<'day' | 'month' | 'all'>('month');
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Sync with Supabase if available
+  useEffect(() => {
+    async function fetchData() {
+      if (!supabase) return;
+      
+      setIsSyncing(true);
+      try {
+        const { data: trans, error: transError } = await supabase.from('transactions').select('*');
+        if (trans && !transError) setTransactions(trans);
+
+        const { data: cats, error: catsError } = await supabase.from('categories').select('*');
+        if (cats && !catsError) setCategories(cats);
+        
+        const { data: usr, error: usrError } = await supabase.from('users').select('*');
+        if (usr && !usrError) setUsers(usr);
+      } catch (err) {
+        console.error('Supabase fetch failed:', err);
+      } finally {
+        setIsSyncing(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('users', JSON.stringify(users));
+    if (supabase) {
+      supabase.from('users').upsert(users).then(() => {});
+    }
   }, [users]);
 
   useEffect(() => {
@@ -118,12 +143,23 @@ export default function App() {
     }
   }, [currentUser]);
 
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'users' | 'import'>('dashboard');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filterType, setFilterType] = useState<'all' | TransactionType>('all');
+  const [dateFilter, setDateFilter] = useState<'day' | 'month' | 'all'>('month');
+
   useEffect(() => {
     localStorage.setItem('transactions', JSON.stringify(transactions));
+    if (supabase) {
+      supabase.from('transactions').upsert(transactions).then(() => {});
+    }
   }, [transactions]);
 
   useEffect(() => {
     localStorage.setItem('categories', JSON.stringify(categories));
+    if (supabase) {
+      supabase.from('categories').upsert(categories).then(() => {});
+    }
   }, [categories]);
 
   // Derived Values
